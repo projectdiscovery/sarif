@@ -1,0 +1,113 @@
+{
+	"version": "2.1.0",
+	"$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+	"runs": [
+		{
+			"tool": {
+				"driver": {
+					"name": "vulnscanner",
+					"organization": "ProjectDiscovery",
+					"product": "Scanners",
+					"shortDescription": {
+						"text": "Vulnerability Scanner"
+					},
+					"fullDescription": {
+						"text": "Template Based Vulnerability Scanner"
+					},
+					"fullName": "vulnscanner v2.1.1",
+					"semanticVersion": "v2.1.1",
+					"downloadUri": "https://github.com/projectdiscovery/xxx",
+					"rules": [
+						{
+							"id": "template1",
+							"name": "SQL Injection CVE-2022-xx",
+							"shortDescription": {
+								"text": "SQL Injection Vulnerability due to Dependency"
+							},
+							"fullDescription": {
+								"text": "Full Description of Vulnerability with references"
+							},
+							"properties": {
+								"Severity Rating": "10",
+								"payload": "'sleep(10)--"
+							}
+						}
+					]
+				}
+			},
+			"results": [
+				{
+					"ruleId": "template1",
+					"rule": {
+						"id": "template1",
+						"toolComponent": {
+							"name": "SQL Injection in xxx"
+						}
+					},
+					"level": "error",
+					"kind": "open",
+					"message": {
+						"text": "SQL Injection"
+					},
+					"analysisTarget": {
+						"uri": "https://projectdiscovery.io"
+					},
+					"webRequest": {
+						"body": {}
+					},
+					"webResponse": {
+						"body": {}
+					},
+					"locations": [
+						{
+							"message": {
+								"text": "status.projectdiscovery.io"
+							},
+							"physicalLocation": {
+								"address": {
+									"kind": "parameter",
+									"name": "Address of Location",
+									"fullyQualifiedName": "Name of Address"
+								},
+								"artifactLocation": {
+									"uri": "https://projectdiscovery.com/api/user=admin'",
+									"description": {
+										"text": "https://projectdiscovery.com/api/user=admin'"
+									}
+								}
+							}
+						}
+					]
+				}
+			],
+			"invocations": [
+				{
+					"commandLine": "vulnscanner",
+					"arguments": [
+						"-sC",
+						"-sV"
+					],
+					"responseFiles": [
+						{
+							"uri": "file:///etc/passwd",
+							"description": {
+								"text": "Generated using vulnscanner"
+							}
+						}
+					],
+					"executionSuccessful": true,
+					"executableLocation": {},
+					"workingDirectory": {
+						"uri": "file:///opt"
+					},
+					"environmentVariables": {
+						"GOPROXY": "direct"
+					},
+					"stdin": {},
+					"stdout": {},
+					"stderr": {}
+				}
+			]
+		}
+	]
+}
