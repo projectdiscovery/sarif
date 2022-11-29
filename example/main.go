@@ -8,10 +8,8 @@ import (
 )
 
 func main() {
-
 	// create new sarif report
 	report := sarif.NewReport()
-
 	// Extra metadata can be added to any type of sarif
 	extrametadata := map[string]string{
 		"payload":         "'sleep(10)--",
@@ -125,5 +123,4 @@ func main() {
 	}
 
 	log.Printf("Report sql_report.sarif created")
-
 }
