@@ -34,7 +34,7 @@ type SarifLog struct {
 // Run represents a single invocation of a single analysis tool
 type Run struct {
 	Tool        Tool         `json:"tool"`
-	Result      []Result     `json:"results,omitempty"`
+	Result      []Result     `json:"results"`
 	Invocations []Invocation `json:"invocations,omitempty"`
 }
 
@@ -73,7 +73,8 @@ type ToolComponent struct {
 	FullName         string                    `json:"fullName,omitempty"` // Name Along with version
 	SemanticVersion  string                    `json:"semanticVersion,omitempty"`
 	ReleaseDateUTC   string                    `json:"releaseDateUtc,omitempty"`
-	DownloadURI      string                    `json:"downloadUri,omitempty"`
+	DownloadUri      string                    `json:"downloadUri,omitempty"`
+	InformationUri   string                    `json:"informationUri,omitempty"`
 	Notifications    []ReportingDescriptor     `json:"notifications,omitempty"`
 	Rules            []ReportingDescriptor     `json:"rules,omitempty"`
 	Locations        []ArtifactLocation        `json:"locations,omitempty"`
@@ -84,9 +85,11 @@ type ToolComponent struct {
 type ReportingDescriptor struct {
 	Id               string                    `json:"id,omitempty"`
 	Name             string                    `json:"name,omitempty"`
+	HelpUri          string                    `json:"helpUri,omitempty"`
 	ShortDescription *MultiformatMessageString `json:"shortDescription,omitempty"`
 	FullDescription  *MultiformatMessageString `json:"fullDescription,omitempty"`
 	MessageStrings   *MultiformatMessageString `json:"messageStrings,omitempty"`
+	Help             *MultiformatMessageString `json:"help,omitempty"`
 	Properties       PropertyBag               `json:"properties,omitempty"`
 }
 
