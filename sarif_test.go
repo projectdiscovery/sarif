@@ -9,7 +9,7 @@ import (
 	"github.com/projectdiscovery/sarif"
 )
 
-func Test_UnmarshalReport(t *testing.T) {
+func TestUnmarshalReport(t *testing.T) {
 	sarifFiles := []string{}
 
 	if err := filepath.WalkDir("static", func(path string, d fs.DirEntry, err error) error {
@@ -34,7 +34,7 @@ func Test_UnmarshalReport(t *testing.T) {
 	}
 }
 
-func Test_Report(t *testing.T) {
+func TestReport(t *testing.T) {
 	report := sarif.NewReport()
 
 	metadata := map[string]string{
@@ -52,6 +52,11 @@ func Test_Report(t *testing.T) {
 		FullDescription: &sarif.MultiformatMessageString{
 			Text: "Full Description of Vulnerability with references",
 		},
+		Help: &sarif.MultiformatMessageString{
+			Text:     "SQL injections",
+			Markdown: "# SQL injections\nInjections are _often_ caused by...",
+		},
+		HelpUri:    "https://www.cve.org/CVERecord?id=CVE-2020-xx",
 		Properties: metadata,
 	}
 
@@ -67,7 +72,8 @@ func Test_Report(t *testing.T) {
 		},
 		FullName:        "vulnscanner v2.1.1",
 		SemanticVersion: "v2.1.1",
-		DownloadURI:     "https://github.com/projectdiscovery/xxx",
+		InformationUri:  "https://github.com/projectdiscovery/nuclei",
+		DownloadUri:     "https://github.com/projectdiscovery/xxx",
 		Rules:           []sarif.ReportingDescriptor{rule1},
 	})
 
@@ -134,5 +140,68 @@ func Test_Report(t *testing.T) {
 	if _, err := report.Export(); err != nil {
 		t.Fatalf("failed to export report")
 	}
+}
 
+func TestEmptyResultsReport(t *testing.T) {
+	report := sarif.NewReport()
+
+	metadata := map[string]string{
+		"payload":         "'sleep(10)--",
+		"Severity Rating": "10",
+	}
+
+	// rule or template
+	rule1 := sarif.ReportingDescriptor{
+		Id:   "template1",
+		Name: "SQL Injection CVE-2022-xx",
+		ShortDescription: &sarif.MultiformatMessageString{
+			Text: "SQL Injection Vulnerability due to Dependency",
+		},
+		FullDescription: &sarif.MultiformatMessageString{
+			Text: "Full Description of Vulnerability with references",
+		},
+		HelpUri:    "https://www.cve.org/CVERecord?id=CVE-2020-xx",
+		Properties: metadata,
+	}
+
+	report.RegisterTool(sarif.ToolComponent{
+		Name:         "vulnscanner",
+		Organization: "ProjectDiscovery",
+		Product:      "Scanners",
+		ShortDescription: &sarif.MultiformatMessageString{
+			Text: "Vulnerability Scanner",
+		},
+		FullDescription: &sarif.MultiformatMessageString{
+			Text: "Template Based Vulnerability Scanner",
+		},
+		FullName:        "vulnscanner v2.1.1",
+		SemanticVersion: "v2.1.1",
+		InformationUri:  "https://github.com/projectdiscovery/nuclei",
+		DownloadUri:     "https://github.com/projectdiscovery/xxx",
+		Rules:           []sarif.ReportingDescriptor{rule1},
+	})
+
+	outfiles := sarif.ArtifactLocation{
+		Uri: "file:///etc/passwd",
+		Description: &sarif.Message{
+			Text: "Generated using vulnscanner",
+		},
+	}
+
+	report.RegisterToolInvocation(sarif.Invocation{
+		CommandLine:         "vulnscanner",
+		Arguments:           []string{"-sC", "-sV"},
+		ResponseFiles:       []sarif.ArtifactLocation{outfiles},
+		ExecutionSuccessful: true,
+		WorkingDirectory: sarif.ArtifactLocation{
+			Uri: "file:///opt",
+		},
+		EnvironmentVariables: map[string]string{
+			"GOPROXY": "direct",
+		},
+	})
+
+	if _, err := report.Export(); err != nil {
+		t.Fatalf("failed to export report")
+	}
 }

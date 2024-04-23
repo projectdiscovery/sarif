@@ -26,6 +26,11 @@ func main() {
 		FullDescription: &sarif.MultiformatMessageString{
 			Text: "Full Description of Vulnerability with references",
 		},
+		Help: &sarif.MultiformatMessageString{
+			Text:     "SQL injections",
+			Markdown: "# SQL injections\nInjections are _often_ caused by...",
+		},
+		HelpUri:    "https://www.cve.org/CVERecord?id=CVE-2020-xx",
 		Properties: extrametadata,
 	}
 
@@ -42,7 +47,8 @@ func main() {
 		},
 		FullName:        "vulnscanner v2.1.1",
 		SemanticVersion: "v2.1.1",
-		DownloadURI:     "https://github.com/projectdiscovery/xxx",
+		InformationUri:  "https://github.com/projectdiscovery/nuclei",
+		DownloadUri:     "https://github.com/projectdiscovery/xxx",
 		Rules:           []sarif.ReportingDescriptor{rule1},
 		// The order of rules/templates/plugins is important here
 		// this index is referenced when a result/vulnerability is found
