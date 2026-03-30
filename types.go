@@ -98,7 +98,7 @@ type Result struct {
 	RuleId         string                       `json:"ruleId,omitempty"`
 	RuleIndex      int                          `json:"ruleIndex,omitempty"` //The index within the tool component rules array
 	Rank           int                          `json:"rank,omitempty"`      // Specifies the relative priority of the report
-	Rule           ReportingDescriptorReference `json:"rule,omitempty"`
+	Rule           *ReportingDescriptorReference `json:"rule,omitempty"`
 	Level          Level                        `json:"level,omitempty"`
 	Kind           Kind                         `json:"kind,omitempty"`
 	Message        *Message                     `json:"message,omitempty"`
@@ -151,7 +151,7 @@ type ReportingDescriptorReference struct {
 	Id            string        `json:"id,omitempty"`
 	Index         int           `json:"index,omitempty"`
 	GUID          string        `json:"guid,omitempty"`
-	ToolComponent ToolComponent `json:"toolComponent,omitempty"`
+	ToolComponent *ToolComponent `json:"toolComponent,omitempty"`
 	Properties    PropertyBag   `json:"properties,omitempty"`
 }
 

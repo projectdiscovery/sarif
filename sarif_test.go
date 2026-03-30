@@ -127,9 +127,9 @@ func TestReport(t *testing.T) {
 		Message: &sarif.Message{
 			Text: "SQL Injection",
 		},
-		Rule: sarif.ReportingDescriptorReference{
+		Rule: &sarif.ReportingDescriptorReference{
 			Id: "template1",
-			ToolComponent: sarif.ToolComponent{
+			ToolComponent: &sarif.ToolComponent{
 				Name:             "SQL Injection in xxx",
 				ShortDescription: rule1.MessageStrings,
 			},
