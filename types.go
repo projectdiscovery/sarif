@@ -95,18 +95,19 @@ type ReportingDescriptor struct {
 
 // Result contains result produced by analysis tool
 type Result struct {
-	RuleId         string                       `json:"ruleId,omitempty"`
-	RuleIndex      int                          `json:"ruleIndex,omitempty"` //The index within the tool component rules array
-	Rank           int                          `json:"rank,omitempty"`      // Specifies the relative priority of the report
-	Rule           *ReportingDescriptorReference `json:"rule,omitempty"`
-	Level          Level                        `json:"level,omitempty"`
-	Kind           Kind                         `json:"kind,omitempty"`
-	Message        *Message                     `json:"message,omitempty"`
-	AnalysisTarget ArtifactLocation             `json:"analysisTarget,omitempty"`
-	WebRequest     WebRequest                   `json:"webRequest,omitempty"`
-	WebResponse    WebResponse                  `json:"webResponse,omitempty"`
-	Properties     PropertyBag                  `json:"properties,omitempty"`
-	Locations      []Location                   `json:"locations,omitempty"` // location where result was detected
+	RuleId              string                        `json:"ruleId,omitempty"`
+	RuleIndex           int                           `json:"ruleIndex,omitempty"` //The index within the tool component rules array
+	Rank                int                           `json:"rank,omitempty"`      // Specifies the relative priority of the report
+	Rule                *ReportingDescriptorReference `json:"rule,omitempty"`
+	Level               Level                         `json:"level,omitempty"`
+	Kind                Kind                          `json:"kind,omitempty"`
+	Message             *Message                      `json:"message,omitempty"`
+	AnalysisTarget      ArtifactLocation              `json:"analysisTarget,omitempty"`
+	WebRequest          WebRequest                    `json:"webRequest,omitempty"`
+	WebResponse         WebResponse                   `json:"webResponse,omitempty"`
+	Properties          PropertyBag                   `json:"properties,omitempty"`
+	Locations           []Location                    `json:"locations,omitempty"` // location where result was detected
+	PartialFingerprints map[string]string             `json:"partialFingerprints,omitempty"`
 	// Attachments    interface{}                  `json:"attachments,omitempty"`
 }
 
@@ -148,11 +149,11 @@ type WebResponse struct {
 
 // ReportingDescriptorReference contains Information about how to locate a relevant reporting descriptor
 type ReportingDescriptorReference struct {
-	Id            string        `json:"id,omitempty"`
-	Index         int           `json:"index,omitempty"`
-	GUID          string        `json:"guid,omitempty"`
+	Id            string         `json:"id,omitempty"`
+	Index         int            `json:"index,omitempty"`
+	GUID          string         `json:"guid,omitempty"`
 	ToolComponent *ToolComponent `json:"toolComponent,omitempty"`
-	Properties    PropertyBag   `json:"properties,omitempty"`
+	Properties    PropertyBag    `json:"properties,omitempty"`
 }
 
 // Encapsulates a message intended to be read by the end user
