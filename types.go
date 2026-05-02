@@ -33,9 +33,19 @@ type SarifLog struct {
 
 // Run represents a single invocation of a single analysis tool
 type Run struct {
-	Tool        Tool         `json:"tool"`
-	Result      []Result     `json:"results"`
-	Invocations []Invocation `json:"invocations,omitempty"`
+	Tool                     Tool                   `json:"tool"`
+	Result                   []Result               `json:"results"`
+	Invocations              []Invocation           `json:"invocations,omitempty"`
+	VersionControlProvenance []VersionControlDetail `json:"versionControlProvenance,omitempty"`
+}
+
+// VersionControlDetail identifies the source control context for analyzed artifacts.
+type VersionControlDetail struct {
+	RepositoryURI string           `json:"repositoryUri,omitempty"`
+	MappedTo      ArtifactLocation `json:"mappedTo,omitempty"`
+	RevisionID    string           `json:"revisionId,omitempty"`
+	Branch        string           `json:"branch,omitempty"`
+	Properties    PropertyBag      `json:"properties,omitempty"`
 }
 
 // The runtime environment of the analysis tool run
@@ -95,18 +105,19 @@ type ReportingDescriptor struct {
 
 // Result contains result produced by analysis tool
 type Result struct {
-	RuleId         string                       `json:"ruleId,omitempty"`
-	RuleIndex      int                          `json:"ruleIndex,omitempty"` //The index within the tool component rules array
-	Rank           int                          `json:"rank,omitempty"`      // Specifies the relative priority of the report
-	Rule           ReportingDescriptorReference `json:"rule,omitempty"`
-	Level          Level                        `json:"level,omitempty"`
-	Kind           Kind                         `json:"kind,omitempty"`
-	Message        *Message                     `json:"message,omitempty"`
-	AnalysisTarget ArtifactLocation             `json:"analysisTarget,omitempty"`
-	WebRequest     WebRequest                   `json:"webRequest,omitempty"`
-	WebResponse    WebResponse                  `json:"webResponse,omitempty"`
-	Properties     PropertyBag                  `json:"properties,omitempty"`
-	Locations      []Location                   `json:"locations,omitempty"` // location where result was detected
+	RuleId              string                       `json:"ruleId,omitempty"`
+	RuleIndex           int                          `json:"ruleIndex,omitempty"` //The index within the tool component rules array
+	Rank                int                          `json:"rank,omitempty"`      // Specifies the relative priority of the report
+	Rule                ReportingDescriptorReference `json:"rule,omitempty"`
+	Level               Level                        `json:"level,omitempty"`
+	Kind                Kind                         `json:"kind,omitempty"`
+	Message             *Message                     `json:"message,omitempty"`
+	PartialFingerprints map[string]string            `json:"partialFingerprints,omitempty"`
+	AnalysisTarget      ArtifactLocation             `json:"analysisTarget,omitempty"`
+	WebRequest          WebRequest                   `json:"webRequest,omitempty"`
+	WebResponse         WebResponse                  `json:"webResponse,omitempty"`
+	Properties          PropertyBag                  `json:"properties,omitempty"`
+	Locations           []Location                   `json:"locations,omitempty"` // location where result was detected
 	// Attachments    interface{}                  `json:"attachments,omitempty"`
 }
 
@@ -121,7 +132,19 @@ type Location struct {
 type PhysicalLocation struct {
 	Address          Address          `json:"address,omitempty"`
 	ArtifactLocation ArtifactLocation `json:"artifactLocation,omitempty"`
+	Region           *Region          `json:"region,omitempty"`
+	ContextRegion    *Region          `json:"contextRegion,omitempty"`
 	Properties       PropertyBag      `json:"properties,omitempty"`
+}
+
+// Region specifies a region within an artifact.
+type Region struct {
+	StartLine   int              `json:"startLine,omitempty"`
+	StartColumn int              `json:"startColumn,omitempty"`
+	EndLine     int              `json:"endLine,omitempty"`
+	EndColumn   int              `json:"endColumn,omitempty"`
+	Snippet     *ArtifactContent `json:"snippet,omitempty"`
+	Properties  PropertyBag      `json:"properties,omitempty"`
 }
 
 // WebRequest describes http request
@@ -174,6 +197,7 @@ type MultiformatMessageString struct {
 // Specifies Location of the Artifact
 type ArtifactLocation struct {
 	Uri         string      `json:"uri,omitempty"`
+	UriBaseId   string      `json:"uriBaseId,omitempty"`
 	Description *Message    `json:"description,omitempty"`
 	Properties  PropertyBag `json:"properties,omitempty"`
 }

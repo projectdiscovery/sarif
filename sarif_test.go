@@ -1,6 +1,7 @@
 package sarif_test
 
 import (
+	"encoding/json"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -203,5 +204,221 @@ func TestEmptyResultsReport(t *testing.T) {
 
 	if _, err := report.Export(); err != nil {
 		t.Fatalf("failed to export report")
+	}
+}
+
+func TestExportNormalizesValidatorCriticalFields(t *testing.T) {
+	report := sarif.NewReport()
+
+	report.RegisterTool(sarif.ToolComponent{
+		Name:        "Nuclei",
+		DownloadUri: "https://github.com/projectdiscovery/nuclei/releases",
+		Rules: []sarif.ReportingDescriptor{
+			{
+				Id:   "ssh-sha1-hmac-algo",
+				Name: "SSH SHA-1 HMAC Algorithms Enabled",
+			},
+		},
+	})
+
+	report.RegisterResult(sarif.Result{
+		RuleId: "ssh-sha1-hmac-algo",
+		Rule: sarif.ReportingDescriptorReference{
+			Id: "ssh-sha1-hmac-algo",
+		},
+		Message: &sarif.Message{Text: "example result"},
+		Locations: []sarif.Location{
+			{
+				PhysicalLocation: sarif.PhysicalLocation{
+					ArtifactLocation: sarif.ArtifactLocation{Uri: "/"},
+				},
+			},
+		},
+	})
+
+	out, err := report.Export()
+	if err != nil {
+		t.Fatalf("failed to export normalized report: %v", err)
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(out, &data); err != nil {
+		t.Fatalf("failed to decode exported report: %v", err)
+	}
+
+	runs := data["runs"].([]any)
+	run := runs[0].(map[string]any)
+
+	tool := run["tool"].(map[string]any)
+	driver := tool["driver"].(map[string]any)
+	if driver["informationUri"] == "" {
+		t.Fatalf("expected driver informationUri to be populated")
+	}
+
+	rules := driver["rules"].([]any)
+	rule := rules[0].(map[string]any)
+	help := rule["help"].(map[string]any)
+	if strings.TrimSpace(help["text"].(string)) == "" {
+		t.Fatalf("expected rule help text to be populated")
+	}
+	if strings.TrimSpace(rule["helpUri"].(string)) == "" {
+		t.Fatalf("expected rule helpUri to be populated")
+	}
+	if rule["id"].(string) != "ssh-sha1-hmac-algo" {
+		t.Fatalf("expected rule id to be preserved")
+	}
+	if rule["name"].(string) != "SSH SHA-1 HMAC Algorithms Enabled" {
+		t.Fatalf("expected rule name to be preserved")
+	}
+
+	if _, ok := run["versionControlProvenance"]; !ok {
+		t.Fatalf("expected versionControlProvenance to be populated")
+	}
+	versionControlProvenance := run["versionControlProvenance"].([]any)
+	if len(versionControlProvenance) == 0 {
+		t.Fatalf("expected at least one versionControlProvenance entry")
+	}
+	firstVersionControl := versionControlProvenance[0].(map[string]any)
+	mappedTo := firstVersionControl["mappedTo"].(map[string]any)
+	if strings.TrimSpace(mappedTo["uriBaseId"].(string)) == "" {
+		t.Fatalf("expected versionControlProvenance.mappedTo.uriBaseId to be populated")
+	}
+
+	results := run["results"].([]any)
+	result := results[0].(map[string]any)
+	if _, ok := result["rule"]; ok {
+		t.Fatalf("expected redundant result.rule property to be omitted")
+	}
+	message := result["message"].(map[string]any)
+	if strings.TrimSpace(message["text"].(string)) == "" {
+		t.Fatalf("expected result message text to be populated")
+	}
+
+	partialFingerprints := result["partialFingerprints"].(map[string]any)
+	if len(partialFingerprints) == 0 {
+		t.Fatalf("expected partialFingerprints to be populated")
+	}
+
+	locations := result["locations"].([]any)
+	location := locations[0].(map[string]any)
+	physicalLocation := location["physicalLocation"].(map[string]any)
+	artifactLocation := physicalLocation["artifactLocation"].(map[string]any)
+	if artifactLocation["uri"].(string) == "/" {
+		t.Fatalf("expected leading slash URI to be normalized")
+	}
+	if strings.TrimSpace(artifactLocation["uriBaseId"].(string)) == "" {
+		t.Fatalf("expected artifact location uriBaseId to be populated")
+	}
+
+	region := physicalLocation["region"].(map[string]any)
+	if int(region["startLine"].(float64)) < 1 {
+		t.Fatalf("expected region.startLine to be >= 1")
+	}
+	if _, ok := region["snippet"]; !ok {
+		t.Fatalf("expected region snippet to be populated")
+	}
+	if _, ok := physicalLocation["contextRegion"]; !ok {
+		t.Fatalf("expected contextRegion to be populated")
+	}
+}
+
+func TestExportWithOptionsDefaultMatchesExport(t *testing.T) {
+	report := sarif.NewReport()
+	report.RegisterTool(sarif.ToolComponent{
+		Name: "Nuclei",
+		Rules: []sarif.ReportingDescriptor{
+			{Id: "sample-rule", Name: "Sample Rule"},
+		},
+	})
+	report.RegisterResult(sarif.Result{
+		RuleId:  "sample-rule",
+		Message: &sarif.Message{Text: "sample"},
+		Locations: []sarif.Location{
+			{PhysicalLocation: sarif.PhysicalLocation{ArtifactLocation: sarif.ArtifactLocation{Uri: "/"}}},
+		},
+	})
+
+	defaultExport, err := report.Export()
+	if err != nil {
+		t.Fatalf("failed default export: %v", err)
+	}
+
+	optionExport, err := report.ExportWithOptions()
+	if err != nil {
+		t.Fatalf("failed option export: %v", err)
+	}
+
+	if string(defaultExport) != string(optionExport) {
+		t.Fatalf("expected Export and ExportWithOptions defaults to be identical")
+	}
+}
+
+func TestExportWithOptionsCanDisableNormalization(t *testing.T) {
+	report := sarif.NewReport()
+	report.RegisterTool(sarif.ToolComponent{
+		Name: "Nuclei",
+		Rules: []sarif.ReportingDescriptor{
+			{Id: "custom-rule-id", Name: "Custom Rule Name"},
+		},
+	})
+	report.RegisterResult(sarif.Result{
+		RuleId:  "custom-rule-id",
+		Message: &sarif.Message{Text: "example"},
+		Locations: []sarif.Location{
+			{PhysicalLocation: sarif.PhysicalLocation{ArtifactLocation: sarif.ArtifactLocation{Uri: "/"}}},
+		},
+	})
+
+	normalizedOut, err := report.ExportWithOptions()
+	if err != nil {
+		t.Fatalf("failed normalized export: %v", err)
+	}
+
+	unnormalizedOut, err := report.ExportWithOptions(sarif.WithNormalization(false))
+	if err != nil {
+		t.Fatalf("failed unnormalized export: %v", err)
+	}
+
+	var normalizedData map[string]any
+	if err := json.Unmarshal(normalizedOut, &normalizedData); err != nil {
+		t.Fatalf("failed to decode normalized export: %v", err)
+	}
+
+	var unnormalizedData map[string]any
+	if err := json.Unmarshal(unnormalizedOut, &unnormalizedData); err != nil {
+		t.Fatalf("failed to decode unnormalized export: %v", err)
+	}
+
+	normalizedRun := normalizedData["runs"].([]any)[0].(map[string]any)
+	unnormalizedRun := unnormalizedData["runs"].([]any)[0].(map[string]any)
+
+	normalizedRule := normalizedRun["tool"].(map[string]any)["driver"].(map[string]any)["rules"].([]any)[0].(map[string]any)
+	unnormalizedRule := unnormalizedRun["tool"].(map[string]any)["driver"].(map[string]any)["rules"].([]any)[0].(map[string]any)
+
+	if normalizedRule["id"].(string) != "custom-rule-id" {
+		t.Fatalf("expected normalized export to preserve original rule id")
+	}
+	if unnormalizedRule["id"].(string) != "custom-rule-id" {
+		t.Fatalf("expected unnormalized export to keep original rule id")
+	}
+
+	normalizedResult := normalizedRun["results"].([]any)[0].(map[string]any)
+	unnormalizedResult := unnormalizedRun["results"].([]any)[0].(map[string]any)
+
+	if _, ok := normalizedResult["partialFingerprints"]; !ok {
+		t.Fatalf("expected normalized export to add partialFingerprints")
+	}
+	if _, ok := unnormalizedResult["partialFingerprints"]; ok {
+		t.Fatalf("expected unnormalized export to skip partialFingerprints synthesis")
+	}
+
+	normalizedURI := normalizedResult["locations"].([]any)[0].(map[string]any)["physicalLocation"].(map[string]any)["artifactLocation"].(map[string]any)["uri"].(string)
+	unnormalizedURI := unnormalizedResult["locations"].([]any)[0].(map[string]any)["physicalLocation"].(map[string]any)["artifactLocation"].(map[string]any)["uri"].(string)
+
+	if normalizedURI == "/" {
+		t.Fatalf("expected normalized export to normalize leading slash URI")
+	}
+	if unnormalizedURI != "/" {
+		t.Fatalf("expected unnormalized export to preserve original URI")
 	}
 }
